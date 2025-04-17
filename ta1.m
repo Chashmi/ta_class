@@ -24,3 +24,54 @@ subplot(3,1,3)
 stem(n_y, y, 'filled');
 title('y[n] = x[n] * h[n]');
 xlabel('n'); ylabel('y[n]'); grid on;
+
+
+%-----------------------------------------------------
+
+% Signals
+x = [1 1 1 1];             % x[n] = u[n] - u[n-4]
+n_x = 0:length(x)-1;
+
+h = (1/2).^(0:20);         % h[n] = (1/2)^n * u[n]
+n_h = 0:length(h)-1;
+
+% Time range for convolution output
+n_y = n_x(1) + n_h(1) : n_x(end) + n_h(end);
+y = zeros(1, length(n_y));
+
+% Animation setup
+figure;
+for n = 0 : length(n_y)-1
+    % Flipped and shifted h[-k+n] or h[n-k]
+    h_shifted = zeros(1, length(n_x));
+    for k = 1:length(n_x)
+        index = n - (k-1) + 1;
+        if index >= 1 && index <= length(h)
+            h_shifted(k) = h(index);
+        else
+            h_shifted(k) = 0;
+        end
+    end
+
+    % Element-wise multiplication and sum
+    product = x .* h_shifted;
+    y(n+1) = sum(product);
+
+    % Plot
+    clf
+    subplot(3,1,1)
+    stem(n_x, x, 'filled'); title('x[n]'); ylim([0 1.2]);
+    grid on;
+
+    subplot(3,1,2)
+    stem(n_x, h_shifted, 'filled'); title(['h[n - k] (shifted, step ', num2str(n), ')']); ylim([0 1.2]);
+    grid on;
+
+    subplot(3,1,3)
+    stem(n_y, y, 'filled'); title('y[n] = x[n] * h[n]'); ylim([0 max(y)+0.5]);
+    grid on;
+
+    pause(0.3);  % pause between frames
+end
+
+
