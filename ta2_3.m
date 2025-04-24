@@ -1,33 +1,61 @@
-% === SETUP ===
-T = 2*pi;                       % Period
-t = linspace(-T, T, 1000);      % Time vector
-omega0 = 2*pi/T;
-f0 = 1/T;                       % Fundamental frequency
+function slider_smooth_square()
+    % === FIGURE SETUP ===
+    f = figure('Name', 'Smooth Square Wave Fourier Approximation', ...
+               'NumberTitle', 'off', 'Position', [100 100 850 600]);
 
-% === TIME DOMAIN SIGNAL ===
-x_true = square(t);             % Original square wave
-A1 = 4/pi;                      % First harmonic coefficient
-x_approx = A1 * cos(omega0 * t);  % Only a1 + a-1 (cosine form), a0 = 0
+    % === TIME SETUP ===
+    T = 2*pi;
+    t = linspace(-T, T, 2000);
+    omega0 = 2*pi/T;
+    f0 = 1/T;
 
-% === FREQUENCY DOMAIN PLOT ===
-frequencies = [-f0 0 f0];
-magnitudes = [A1/2 0 A1/2];     % a1 and a-1 have magnitude 0.5 * A1 (from Euler expansion)
+    % === SMOOTH "SQUARE-LIKE" SIGNAL ===
+    x_input = tanh(10 * sin(t));  % smooth alternative to square wave
 
-% === PLOT BOTH ===
-figure;
+    % === SLIDER UI ===
+    uicontrol('Style', 'text', 'Position', [370 50 100 20], ...
+              'String', 'Harmonics');
+    slider = uicontrol('Style', 'slider', 'Min', 1, 'Max', 100, ...
+                       'Value', 10, 'SliderStep', [1/99 1/99], ...
+                       'Position', [300 20 200 30], ...
+                       'Callback', @updatePlot);
 
-% 1. TIME DOMAIN
-subplot(2,1,1);
-plot(t, x_true, 'k--', 'LineWidth', 1.5); hold on;
-plot(t, x_approx, 'r', 'LineWidth', 2);
-title('Time Domain: Square Wave vs Approximation');
-legend('Original Square', 'a_0 + a_{\pm1}');
-xlabel('t'); ylabel('x(t)'); grid on;
+    % === AXES ===
+    ax1 = subplot(2,1,1);
+    ax2 = subplot(2,1,2);
+    updatePlot();  % Initial plot
 
-% 2. FREQUENCY DOMAIN
-subplot(2,1,2);
-stem(frequencies, magnitudes, 'filled', 'LineWidth', 2);
-title('Frequency Domain: 3 Harmonics Only');
-xlabel('Frequency (Hz)'); ylabel('|a_k|'); grid on;
-xlim([-2*f0 2*f0]);  % Show enough range
+    % === CALLBACK FUNCTION ===
+    function updatePlot(~, ~)
+        N = round(get(slider, 'Value'));  % number of harmonics
+        a0 = (1/T) * trapz(t, x_input);   % DC term
+        x_approx = a0 * ones(size(t));    % start with DC
 
+        ak = zeros(1, N);
+        freqs = [];
+        for k = 1:N
+            ak(k) = (1/T) * trapz(t, x_input .* exp(-1j * k * omega0 * t));
+            x_approx = x_approx + ...
+                ak(k) * exp(1j * k * omega0 * t) + ...
+                conj(ak(k)) * exp(-1j * k * omega0 * t);
+            freqs = [freqs, -k*f0, k*f0];
+        end
+
+        mag_spec = repelem(abs(ak), 2);
+
+        % === PLOT TIME DOMAIN ===
+        axes(ax1); cla;
+        plot(t, x_input, 'k--', 'LineWidth', 1.3); hold on;
+        plot(t, real(x_approx), 'r', 'LineWidth', 2);
+        title(['Time Domain: Smooth Square with ', num2str(N), ' Harmonics']);
+        legend('Input tanh(10·sin(t))', 'Reconstructed'); grid on;
+        xlabel('t'); ylabel('x(t)');
+
+        % === PLOT FREQUENCY DOMAIN ===
+        axes(ax2); cla;
+        stem(freqs, mag_spec, 'filled', 'LineWidth', 1.3);
+        title('Frequency Domain: |a_k|');
+        xlabel('Frequency (Hz)'); ylabel('|a_k|');
+        xlim([-N-2 N+2]*f0); grid on;
+    end
+end
