@@ -7,4 +7,4 @@ ta2_1:
 
 ta2_2: Understanding the Half-waved Symmetry
 
-ta2_2: Frequency Spikes!
+ta2_3: Frequency Spikes!
