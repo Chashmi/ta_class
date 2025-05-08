@@ -14,3 +14,8 @@ ta2_1:
 ta2_2: Understanding the Half-waved Symmetry
 
 ta2_3: Frequency Spikes! (SIDER UI, USE .M FORMAT)
+
+----------------------------
+**Session 3:**
+
+ta3_1: effect of the time shift on the frequency
